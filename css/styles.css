@@ -76,6 +76,29 @@ body {
 .products-list {
   display: flex;
   flex-direction: column;
+  gap: 1.5rem;
+}
+
+.category-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.category-title {
+  margin: 0;
+  padding-bottom: 0.35rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid var(--border);
+}
+
+.category-items {
+  display: flex;
+  flex-direction: column;
   gap: 0.75rem;
 }
 

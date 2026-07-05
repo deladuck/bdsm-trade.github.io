@@ -1,4 +1,9 @@
 const cart = new Map();
+let globalMultiplier = 0;
+
+function getMultiplier(product) {
+  return product.multiplier ?? globalMultiplier;
+}
 
 function calcFinalPrice(price, multiplier = 0) {
   return price - price * multiplier;
@@ -29,6 +34,39 @@ function updateProductQuantity(productId) {
   }
 }
 
+function renderProductCard(product) {
+  const finalPrice = calcFinalPrice(product.price, getMultiplier(product));
+  const qty = getQuantity(product.id);
+
+  return `
+    <article class="product-card" data-product-id="${product.id}">
+      <div class="product-info">
+        <h3 class="product-name">${escapeHtml(product.name)}</h3>
+        <p class="product-price">${formatPrice(finalPrice)}</p>
+      </div>
+      <div class="product-controls">
+        <button type="button" class="btn btn-minus" aria-label="Зменшити кількість">−</button>
+        <span class="quantity">${qty}</span>
+        <button type="button" class="btn btn-plus" aria-label="Збільшити кількість">+</button>
+      </div>
+    </article>
+  `;
+}
+
+function groupByCategory(products) {
+  const groups = new Map();
+
+  for (const product of products) {
+    const category = product.category || "Інше";
+    if (!groups.has(category)) {
+      groups.set(category, []);
+    }
+    groups.get(category).push(product);
+  }
+
+  return groups;
+}
+
 function renderProducts(products) {
   const container = document.getElementById("products-list");
 
@@ -37,25 +75,17 @@ function renderProducts(products) {
     return;
   }
 
-  container.innerHTML = products
-    .map((product) => {
-      const finalPrice = calcFinalPrice(product.price, product.multiplier ?? 0);
-      const qty = getQuantity(product.id);
+  const groups = groupByCategory(products);
 
-      return `
-        <article class="product-card" data-product-id="${product.id}">
-          <div class="product-info">
-            <h3 class="product-name">${escapeHtml(product.name)}</h3>
-            <p class="product-price">${formatPrice(finalPrice)}</p>
-          </div>
-          <div class="product-controls">
-            <button type="button" class="btn btn-minus" aria-label="Зменшити кількість">−</button>
-            <span class="quantity">${qty}</span>
-            <button type="button" class="btn btn-plus" aria-label="Збільшити кількість">+</button>
-          </div>
-        </article>
-      `;
-    })
+  container.innerHTML = [...groups.entries()]
+    .map(([category, items]) => `
+      <section class="category-group">
+        <h3 class="category-title">${escapeHtml(category)}</h3>
+        <div class="category-items">
+          ${items.map(renderProductCard).join("")}
+        </div>
+      </section>
+    `)
     .join("");
 
   container.querySelectorAll(".product-card").forEach((card) => {
@@ -88,7 +118,7 @@ function renderCart() {
     const product = productsById.get(productId);
     if (!product) continue;
 
-    const unitPrice = calcFinalPrice(product.price, product.multiplier ?? 0);
+    const unitPrice = calcFinalPrice(product.price, getMultiplier(product));
     const lineTotal = unitPrice * quantity;
     total += lineTotal;
 
@@ -122,10 +152,16 @@ async function init() {
       throw new Error(`HTTP ${response.status}`);
     }
 
-    const products = await response.json();
+    const data = await response.json();
 
-    if (!Array.isArray(products)) {
-      throw new Error("products.json має бути масивом");
+    let products;
+    if (Array.isArray(data)) {
+      products = data;
+    } else if (Array.isArray(data.products)) {
+      globalMultiplier = data.multiplier ?? 0;
+      products = data.products;
+    } else {
+      throw new Error("products.json має бути масивом або об'єктом з полем products");
     }
 
     productsById = new Map(products.map((p) => [p.id, p]));
