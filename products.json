@@ -1,0 +1,20 @@
+[
+  {
+    "id": "bitcoin",
+    "name": "Bitcoin",
+    "price": 1799998,
+    "multiplier": 0.166
+  },
+  {
+    "id": "gold-bar",
+    "name": "Золотий злиток",
+    "price": 450000,
+    "multiplier": 0.12
+  },
+  {
+    "id": "diamond",
+    "name": "Діамант",
+    "price": 890000,
+    "multiplier": 0.08
+  }
+]
